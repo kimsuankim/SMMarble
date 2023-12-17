@@ -17,7 +17,13 @@
 //문자열 배열
 static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] =
 {
-  "강의","식당","실험실","집","실험실로이동","음식찬스","축제시간"
+  "강의",
+  "식당",
+  "실험실",
+  "집",
+  "실험실로이동",
+  "음식찬스",
+  "축제시간"
 };
 
 char* smmObj_getTypeName(int type)
@@ -31,24 +37,8 @@ static int smmObj_credit [MAX_NODE];
 static int smmObj_energy [MAX_NODE];
 static int smmObj_noNode=0; // ????
 #endif
-static int smmObj_noNode=0; //지금까지 저장한 개수 
+//static int smmObj_noNode=0; //지금까지 저장한 개수 
 
-typedef enum smmObjType {
-	smmObjType_board = 0,
-	smmObjType_card,
-	smmObjType_grade
-}smmObjType_e; //옮기기 메인에서도 필요힘 
-typedef enum smmObjGrade {
-	smmObjGrade_Ap = 0,
-	smmObjGrade_A0,
-	smmObjGrade_Bp,
-	smmObjGrade_B0,
-	smmObjGrade_Bm,
-	smmObjGrade_Cp,
-	smmObjGrade_C0,
-	smmObjGrade_Cm
-	
-}smmObjGrade_e; 
 
 //1.구조체 형식 정의
 typedef struct smmobject {
@@ -57,7 +47,7 @@ typedef struct smmobject {
 	int type;
 	int credit;
 	int energy;
-	smmObjType_e grade;
+	smmObjGrade_e grade;
 }smmObject_t;
 
 //2.구조체 배열 변수 정의
@@ -66,9 +56,10 @@ typedef struct smmobject {
 //3.관련 함수 변경 
 
 //object generation
-void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjType_e grade) //노드를 만드는 함수 
+void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade) //노드를 만드는 함수 
 {
 	smmObject_t* ptr;
+	
 	ptr = (smmObject_t*)malloc(sizeof(smmObject_t));//동적노드할당 
 	
     strcpy(ptr->name, name);
@@ -92,23 +83,34 @@ void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, i
 }
 
 //메인! 데이터에 접근해 
-char* smmObj_getNodeName(void* obj) //주소만 받아서 
+char* smmObj_getObjName(void* obj) //주소만 받아서 
 {
 	smmObject_t* ptr = (smmObject_t*)obj;//형변환, 멤버에 접근 
 	return ptr -> name;
 }
-int smmObj_getNodeType(int node_nr)
+int smmObj_getObjType(void* obj)
 {
-	return smm_node[node_nr].type;
+	smmObject_t* ptr = (smmObject_t*)obj;
+	return ptr -> type;
+	
 }
-int smmObj_getNodeCredit(int node_nr)
+int smmObj_getObjCredit(void* obj)
 {
-	return smm_node[node_nr].credit;
+	smmObject_t* ptr = (smmObject_t*)obj; 
+	return ptr -> credit;
 }
-int smmObj_getNodeEnergy(int node_nr)
+int smmObj_getObjEnergy(void* obj)
 {
-	return smm_node[node_nr].energy;
+	smmObject_t* ptr = (smmObject_t*)obj; 
+	return ptr -> energy;
 }
+
+int smmObj_getObjGrade(void* obj)
+{
+	smmObject_t* ptr = (smmObject_t*)obj; 
+	return ptr -> grade;
+}
+
 
 
 //member retrieving

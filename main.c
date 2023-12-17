@@ -35,7 +35,7 @@ typedef struct player{
 	int flag_graduate;//졸업여부  
 }player_t;//플레이어의 구조체화 
 
-static player_t *cur_player;//포인터변순데 
+static player_t *cur_player;//구조체가리키는 포인터변수선언 
 //static player_t cur_player[MAX_PLAYER];
 
 //function prototypes
@@ -54,11 +54,11 @@ void printGrades(int player); //print all the grade history of the player
 void printGrades(int player)
 {
 	int i;
-	void *gradePtr;
-	for(i=0;i<;i++)
+	void *gradePtr;  
+	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
 	{
 		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
-		printf("%s : %i\n", smmObj_getNodeName(grade_Ptr), smmObj_getNodeGrade(grade_Ptr));
+		printf("%s : %i\n", smmObj_getObjName(gradePtr), smmObj_getObjGrade(gradePtr));
 	}
 }
 void printPlayerStatus(void)
@@ -67,7 +67,10 @@ void printPlayerStatus(void)
 	for(i=0; i<player_nr;i++)
 	{
 		printf("%s : credit %i, energy %i, position %i\n",
-		 cur_player[player].accumCredit)
+		 cur_player[i].name, 
+		 cur_player[i].accumCredit,
+		 cur_player[i].energy,
+		 cur_player[i].position);
 	}
 }
 void generatePlayers(int n, int initEnergy)//generate a new player
@@ -77,7 +80,7 @@ void generatePlayers(int n, int initEnergy)//generate a new player
      for (i=0;i<n;i++)
      {
          //input name
-         printf(Input player %i's name: , i); //안내문 
+         printf("Input player %i's name: ", i); //안내문 
          scanf("%s", cur_player[i].name);
          fflush(stdin);
          
@@ -127,14 +130,14 @@ void actionNode(int player) //바꿔야함
             break;
     }
 }
-#endif
+
 
 void goForward(int player, int step)
 {
 	cur_player[player].position += step;
-	printf("%s go to node %i (name:%s)\n", cur_player[player].position, smm_Obj_getNodeName(cur_player[player].position));
+	printf("%s go to node %i (name:%s)\n", cur_player[player].position, smmObj_getObjName(cur_player[player].position));
 }
-
+#endif
 
 int main(int argc, const char * argv[]) {
     
@@ -144,6 +147,7 @@ int main(int argc, const char * argv[]) {
     int credit;
     int energy;
     int i;
+    int initEnergy;
     int turn = 0;
     
     board_nr = 0;
@@ -162,11 +166,12 @@ int main(int argc, const char * argv[]) {
         return -1;
     }
     
+    //보드칸 만들기 
     printf("Reading board component......\n");
     while (fscanf(fp, "%s %i %i %i", name, &type, &credit, &energy) == 4) //read a node parameter set
     {
         //store the parameter set
-        void *boardObj = smmObj_genObject(name, smmObjType_board, type, credit, energy, 0); //보드칸 만드는..적절한 이넘! 
+        void *boardObj = smmObj_genObject(name, smmObjType_board, type, credit, energy, 0); //보드칸 만드는..적절한 이넘! 구조체 포인터 
         smmdb_addTail(LISTNO_NODE, boardObj); //링크드리스트 객체 포인터. 메모리의 주소 //리스트 여러개
 		 
         board_nr ++;
@@ -176,13 +181,13 @@ int main(int argc, const char * argv[]) {
     
     for (i = 0;i<board_nr;i++){
     
-        void *boardObj = ammdb_getData(LISTNO_NODE, i); 
+        void *boardObj = smmdb_getData(LISTNO_NODE, i); 
         printf("node %i : %s, %i(%s), credit %i, energy %i\n", 
-		i, smmObj_getNodeName(i), smmObj_getNodeType(i), smmObj_getTypeName(smmObj_getNodeType(i)),smmObj_getCredit(i), smmObj_getEnergy(i));
-    }
-    printf("(%s)", smmObj_getTypeName(SMMNODE_TYPE_LECTURE));
+		i, smmObj_getObjName(boardObj), smmObj_getObjType(boardObj), smmObj_getTypeName(smmObj_getObjType(boardObj)),smmObj_getObjCredit(boardObj), smmObj_getObjEnergy(boardObj));
+    }//각 노드칸  
     
     
+    #if 0 
     //2. food card config 
     if ((fp = fopen(FOODFILEPATH,"r")) == NULL)
     {
@@ -198,7 +203,7 @@ int main(int argc, const char * argv[]) {
     fclose(fp);
     printf("Total number of food cards : %i\n", food_nr);
     
-    #if 0 
+    
     
     //3. festival card config 
     if ((fp = fopen(FESTFILEPATH,"r")) == NULL)
@@ -217,13 +222,13 @@ int main(int argc, const char * argv[]) {
     #endif
     
     //2. Player configuration ---------------------------------------------------------------------------------
-    
+    #if 0
     do
     {
         //input player number to player_nr
         printf("input player no :");
         scanf("%d", &player_nr);
-        fflush(stdin) 버퍼비우기 
+        fflush(stdin); // 버퍼비우기 
     }
     while (player_nr < 0 || player > MAX_PLAYER);
     
@@ -232,7 +237,7 @@ int main(int argc, const char * argv[]) {
     generatePlayers(player_nr, initEnergy);
     
     
-    #if 0
+   
     //3. SM Marble game starts ---------------------------------------------------------------------------------
     while (1) //is anybody graduated?
     {
