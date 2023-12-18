@@ -14,7 +14,7 @@
 #define MAX_NODE        100
  
 
-//문자열 배열
+//노드이름변수(type에따른) 
 static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] =
 {
   "강의",
@@ -25,29 +25,21 @@ static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] =
   "음식찬스",
   "축제시간"
 };
-
+//노드이름주소반환함수 
 char* smmObj_getTypeName(int type)
 {
-	return (char*)smmNodeName[type];//char가리키는 포인터반환 
+	return (char*)smmNodeName[type];
  } 
-#if 0
-static char smmObj_name [MAX_NODE][MAX_CHARNAME];
-static int smmObj_type [MAX_NODE];
-static int smmObj_credit [MAX_NODE];
-static int smmObj_energy [MAX_NODE];
-static int smmObj_noNode=0; // ????
-#endif
-//static int smmObj_noNode=0; //지금까지 저장한 개수 
 
-
-//1.구조체 형식 정의
+//1.구조체 형식정의
+//노드 구조체 형식 정의 
 typedef struct smmobject {
-	char name[MAX_CHARNAME];
-	smmObjType_e objType; 
-	int type;
-	int credit;
-	int energy;
-	smmObjGrade_e grade;
+	char name[MAX_CHARNAME];//노드이름 
+	smmObjType_e objType; //보드,카드 
+	int type;//노드이름과대응되는 유형 
+	int credit;//학점 
+	int energy;//에너지 
+	smmObjGrade_e grade;//성적 
 }smmObject_t;
 
 //2.구조체 배열 변수 정의
@@ -69,47 +61,39 @@ void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, i
     ptr->energy = energy;
     ptr->grade = grade;
     
-	/*smmObj_type[smmObj_noNode] = type;
-    smmObj_credit[smmObj_noNode] = credit;
-    smmObj_energy[smmObj_noNode] = energy;
-    #endif
-    strcpy(smm_node[smmObj_noNode].name, name);
-    smm_node[smmObj_noNode].type = type;
-    smm_node[smmObj_noNode].credit = credit;
-    smm_node[smmObj_noNode].energy = energy;
-    
-	smmObj_noNode++; */
-	return ptr;
-}
+	return ptr;//동적노드주소반환 
+}//메모리반납안해?? 
 
-//메인! 데이터에 접근해 
-char* smmObj_getObjName(void* obj) //주소만 받아서 
+//메인! 데이터에 접근해//저장된 노드구조체 멤버반환 함수들 
+char* smmObj_getObjName(void* obj)  
 {
 	smmObject_t* ptr = (smmObject_t*)obj;//형변환, 멤버에 접근 
 	return ptr -> name;
-}
+} //노드이름주소반환
+ 
 int smmObj_getObjType(void* obj)
 {
 	smmObject_t* ptr = (smmObject_t*)obj;
 	return ptr -> type;
-	
-}
+}//노드타입반환 
+
 int smmObj_getObjCredit(void* obj)
 {
 	smmObject_t* ptr = (smmObject_t*)obj; 
 	return ptr -> credit;
-}
+}//노드학점반환 
+
 int smmObj_getObjEnergy(void* obj)
 {
 	smmObject_t* ptr = (smmObject_t*)obj; 
 	return ptr -> energy;
-}
-
+}//노드에너지반환
+ 
 int smmObj_getObjGrade(void* obj)
 {
 	smmObject_t* ptr = (smmObject_t*)obj; 
 	return ptr -> grade;
-}
+}//노드성적반환 
 
 
 
