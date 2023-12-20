@@ -14,7 +14,7 @@
 #define MAX_NODE        100
  
 
-//노드이름변수(type에따른) 
+//노드유형이름(type에따른) 
 static char smmNodeName[SMMNODE_TYPE_MAX][MAX_CHARNAME] =
 {
   "강의",
