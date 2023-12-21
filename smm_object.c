@@ -40,6 +40,7 @@ typedef struct smmobject {
 	int credit;//학점 
 	int energy;//에너지 
 	smmObjGrade_e grade;//성적 
+	//struct smmobject* next;//다음노드를 가리키는 포인터변수 
 }smmObject_t;
 
 //2.구조체 배열 변수 정의
@@ -48,7 +49,7 @@ typedef struct smmobject {
 //3.관련 함수 변경 
 
 //object generation
-void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade) //노드를 만드는 함수 
+void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade /*struct smmobject* next*/) //노드를 만드는 함수 
 {
 	smmObject_t* ptr;
 	

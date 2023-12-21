@@ -25,7 +25,7 @@ typedef enum smmObjType {
 	smmObjType_grade
 }smmObjType_e;
 
-//성적종류,  
+//성적종류
 typedef enum smmObjGrade {
 	smmObjGrade_Ap = 0,
 	smmObjGrade_A0,
@@ -37,7 +37,7 @@ typedef enum smmObjGrade {
 	smmObjGrade_C0,
 	smmObjGrade_Cm
 	
-}smmObjGrade_e; 
+}smmObjGrade_e; //자료형임 
 /* node type :
     lecture,
     restaurant,
