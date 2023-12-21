@@ -71,12 +71,12 @@ char* smmObj_getObjName(void* obj);
 int smmObj_getObjType(void* obj);
 int smmObj_getObjCredit(void* obj);
 int smmObj_getObjEnergy(void* obj);
-int smmObj_getObjGrade(void* obj);
+smmObjGrade_e smmObj_getObjGrade(void* obj);
 
 
 
 //element to string
 char* smmObj_getTypeName(int type);
-
+char* smmObj_getGradeName(smmObjGrade_e grade);
 
 #endif /* smm_object_h */

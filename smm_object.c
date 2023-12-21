@@ -30,6 +30,24 @@ char* smmObj_getTypeName(int type)
 {
 	return (char*)smmNodeName[type];
  } 
+ 
+ static char smmGradeName[MAX_GRADE][MAX_CHARNAME] =
+{
+  "A+",
+  "A0",
+  "A-",
+  "B+",
+  "B0",
+  "B-",
+  "C+",
+  "C0",
+  "C-"
+};
+//노드이름주소반환함수 
+char* smmObj_getGradeName(smmObjGrade_e grade)
+{
+	return (char*)smmGradeName[grade];
+ } 
 
 //1.구조체 형식정의
 //노드 구조체 형식 정의 
@@ -39,7 +57,7 @@ typedef struct smmobject {
 	int type;//노드이름과대응되는 유형 
 	int credit;//학점 
 	int energy;//에너지 
-	smmObjGrade_e grade;//성적  
+	smmObjGrade_e grade;//성적 숫자가있는거임  
 }smmObject_t;
 
 
@@ -87,7 +105,7 @@ int smmObj_getObjEnergy(void* obj)
 	return ptr -> energy;
 }//노드에너지반환
  
-int smmObj_getObjGrade(void* obj)
+smmObjGrade_e smmObj_getObjGrade(void* obj)
 {
 	smmObject_t* ptr = (smmObject_t*)obj; 
 	return ptr -> grade;

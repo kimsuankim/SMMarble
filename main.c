@@ -48,6 +48,8 @@ void* findGrade(int player, char *lectureName); //find the grade from the player
 int getGraduatedPlayer(void);//졸업한 플레이어 반환함수
 int findLab(void);//실험실노드 반환함수 
 #endif
+void printGrades(int player); //print grade history of the player
+
 /*공백만들기 함수*/
 void blankSpace(void)
 {
@@ -120,8 +122,8 @@ int rolldie(int player)
     c = getchar();
     fflush(stdin);
     //성적을 본다면(press g) 
-    /*if (c == 'g')
-        printGrades(player);//성적출력함수호출 */
+    if (c == 'g')
+     printGrades(player);//성적출력함수호출 
     //주사위굴리기 
     return (rand()%MAX_DIE + 1); //주사위 1~6 반환 
 }
@@ -191,17 +193,14 @@ int getGraduatedPlayer(void)
 	return gra_player;//졸업한 플레이어 반환 
 }
 
-#if 0
-//성적부여, 저장 함수.. 
-smmObjGrade_e takeLecture(int player, char *lectureName, int credit)
+
+//랜덤성적부여함수 
+int takeLecture(void)
 {
 	//랜덤성적변수 
-	smmObjGrade_e grade = (rand()%MAX_GRADE);
-	printf("%s\n", grade);
-	//성적구조체 생성,저장  
-	void* gradeObj = smmObj_genObject(lectureName, smmObjType_grade, 0, credit, 0, grade);//강의이름,학점,성적 
-     smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradeObj);
-	
+	int grade = rand()%MAX_GRADE;
+	printf("%i\n", grade);
+
 	return grade;
 }
 
@@ -211,15 +210,16 @@ int findGrade(int player, char *lectureName)
 {
 	int i;
 	void *gradePtr;
-	int already = 0;
+	int already = 0;//강의안들음 
 	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
 	{
 		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+		//강의이력있으면 
 		if(smmObj_getObjName(gradePtr) == lectureName)
-		already = 1;
+		already = 1;//강의들음 
 	}
 	
-	return already;
+	return already;//강의수강여부 반환 
 }
 
 //성적구조체 출력 함수 
@@ -230,10 +230,10 @@ void printGrades(int player)
 	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
 	{
 		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
-		printf("%s : %i\n", smmObj_getObjName(gradePtr), smmObj_getObjGrade(gradePtr));
+		printf("%s grade:%s credit:%i \n", smmObj_getObjName(gradePtr), smmObj_getGradeName(smmObj_getObjGrade(gradePtr)), smmObj_getObjCredit(gradePtr));
 	}
 }
-#endif
+
 /*실험실노드 반환 함수
  반환: 실험실노드 */
 int findLab(void)
@@ -257,7 +257,7 @@ void actionNode(int player) //바꿔야함
     int type = smmObj_getObjType(boardPtr);//노드구조체 유형 
     char *name = smmObj_getObjName(boardPtr);//노드구조체 이름 
     int credit = smmObj_getObjCredit(boardPtr);//노드 구조체 학점
-	int energy = smmObj_getObjEnergy(boardPtr);//노드 구조체 에나지 
+	int energy = smmObj_getObjEnergy(boardPtr);//노드 구조체 에너지 
     //void *gradePtr =  smmdb_getData(LISTNO_OFFSET_GRADE + player, cur_player[player].lecture+1);//강의들으면 그 성적 출력 
     //smmObjGrade_e grade_r = smmObj_getObjGrade(gradePtr)//성적받기 
     
@@ -271,27 +271,30 @@ void actionNode(int player) //바꿔야함
     {
         /*1.강의노드(0)*/
         case SMMNODE_TYPE_LECTURE:
-        	//소요에너지이상, 듣지않은강의, 수강드랍선택 
-        	if(cur_player[player].energy >= smmObj_getObjEnergy(boardPtr) /*&& findGrade(player,name) == NULL*/)
+        	//1-1.강의수강가능 :소요에너지이상, 듣지않은강의
+        	if(cur_player[player].energy >= smmObj_getObjEnergy(boardPtr) && findGrade(player, name) == 0 )
         	{
         	 char c;
         	 printf("-->Lecture %s(credit:%i, energy:%i) starts!\n(press a to take a lecture):"
 			  ,name, credit, energy);
         	 c = getchar();
         	 fflush(stdin);
-        	  //강의 수강 선택 
+        	  //1-1.1.강의 수강 선택 
         	  if(c == 'a')
         	  {
         	  	//학점추가, 에너지소모 
         	  	cur_player[player].accumCredit += smmObj_getObjCredit(boardPtr);
                 cur_player[player].energy -= smmObj_getObjEnergy(boardPtr);
-                /*grade generation 성적구조체생성,저장 
-                smmObjGrade_e grade_r = takeLecture(player, name, credit);
+                //grade generation 성적구조체생성,저장 
+                int grade = takeLecture();  
+                //성적구조체 생성,저장  
+	            void* gradeObj = smmObj_genObject(name, smmObjType_grade, 0, credit, 0, grade);//강의이름,학점,성적 
+                 smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradeObj);
                 //강의후 변화 출력 
                 printf("-->%s successfully takes the lecture %s with grade %s, remained energy : %i", //(average:%i)
-				 cur_player[player].name, name, grade_r, cur_player[player].energy);*/
+				 cur_player[player].name, smmObj_getObjName(boardPtr), smmObj_getGradeName(smmObj_getObjGrade(gradeObj)), cur_player[player].energy);
 			  }
-			  //강의드랍선택 
+			  //1-1.2.강의드랍선택 
 			  else
 			  printf("You drop %s\n",name);
 			  
@@ -368,7 +371,11 @@ void actionNode(int player) //바꿔야함
          printf("festivalcard %i : %s\n", 
 		 festcard_r, smmObj_getObjName(festPtr));
 		 //미션하기 
-		 printf("You have to complete'%s'(press any key to continue)\n", smmObj_getObjName(festPtr)); 
+		 char c;
+         printf("You have to complete'%s'(press any key to continue):\n", smmObj_getObjName(festPtr));
+         c= getchar();
+         fflush(stdin);
+		  
 		 break;
 		 
 		default:
@@ -553,12 +560,12 @@ int main(int argc, const char * argv[]) {
     printf("GAME END!!\n");
     printf("GraduatedPlayer is %s\n", cur_player[player_gr].name);
     //졸업한 플레이어의 수강이력 출력 
-    
+    printGrades(player_gr);
 	printf("%s graduate SMWU!!!!!Congratuation!!!!!\n", cur_player[player_gr].name);
 	
-    
 	
-    free(cur_player);//플레이어구조체 메모리 반납 
+    free(cur_player);//플레이어구조체 메모리 반납
+	free(boardPtr_f);//첫번째노드구조체  메모리 반납 
     system("PAUSE");
     return 0;
 }
