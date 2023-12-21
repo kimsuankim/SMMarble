@@ -224,6 +224,19 @@ void printGrades(int player)
 	}
 }
 #endif
+//실험실노드 반환 함수
+int findLab(void)
+{
+	int i;
+	void *labPtr;  
+	for(i=0;i<board_nr;i++)
+	{
+		labPtr = smmdb_getData(LISTNO_NODE, i);//노드데이터받기 
+		if(smmObj_getObjType(labPtr) == SMMNODE_TYPE_LABORATORY) 
+		break;
+	}
+	return i;
+} 
 //action code when a player stays at a node
 void actionNode(int player) //바꿔야함 
 {
@@ -284,7 +297,7 @@ void actionNode(int player) //바꿔야함
 		 printf("You got %i energy!\n", smmObj_getObjEnergy(boardPtr));
 		 break; 
 		 
-		//실험실 : 무인도랑 비슷 
+		/*실험실(2) : 무인도랑 비슷*/ 
 		case SMMNODE_TYPE_LABORATORY:
 		 if (cur_player[player].flag_lab == 1)//실험중
 		  {
@@ -300,8 +313,7 @@ void actionNode(int player) //바꿔야함
 			  	printf("success!! %s can exit this lab!", cur_player[player].name); 
 			  	//실험중 상태 아님
 			  	cur_player[player].flag_lab = 0;
-				//실험실 탈출 
-				//cur_player[player].position = 
+				//실험실 탈출   
 		      }
 		    else//실패
 			printf("fail.. %s cannot exit this lab.. you can try it again next turn", cur_player[player].name);
@@ -317,13 +329,14 @@ void actionNode(int player) //바꿔야함
 		 printf("-->You got %i energy!\n", smmObj_getObjEnergy(boardPtr));
 		 break; 
 		*/	
-		/*실험길로가 : 실험실로 이동, 실험중 상태 
+		/*실험길로가 : 실험실로 이동, 실험중 상태 */
 		case SMMNODE_TYPE_GOTOLAB:
 			//1)실험중 상태로 변경
 			cur_player[player].flag_lab = 1;
-			//2)실험실로 이동 
-			cur_player[player].position = 
-			break;*/
+			//2)실험실로 이동 :실험실노드반환함수 
+			cur_player[player].position = findLab();
+			actionNode(player);
+			break;
 		//보충찬스:랜덤음식카드, 에너지보충 
 		case SMMNODE_TYPE_FOODCHANCE:
          printf("foodcard %i : %s, energy %i\n", 
