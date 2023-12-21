@@ -18,6 +18,7 @@
 
 #define SMMNODE_TYPE_MAX             7
 
+//유형종류 
 typedef enum smmObjType {
 	smmObjType_board = 0,
 	smmObjType_food,
@@ -38,45 +39,23 @@ typedef enum smmObjGrade {
 	smmObjGrade_Cm
 	
 }smmObjGrade_e; //자료형임 
-/* node type :
-    lecture,
-    restaurant,
-    laboratory,
-    home,
-    experiment,
-    foodChance,
-    festival
-*/
-
-
-/* grade :
-    A+,
-    A0,
-    A-,
-    B+,
-    B0,
-    B-,
-    C+,
-    C0,
-    C-
-*/
 
 
 
 //object generation
 void* smmObj_genObject(char* name, smmObjType_e objType, int type, int credit, int energy, smmObjGrade_e grade);
 
-//member retrieving
-char* smmObj_getObjName(void* obj);
-int smmObj_getObjType(void* obj);
-int smmObj_getObjCredit(void* obj);
-int smmObj_getObjEnergy(void* obj);
-smmObjGrade_e smmObj_getObjGrade(void* obj);
+//member retrieving 멤버접근 
+char* smmObj_getObjName(void* obj);//이름접근 
+int smmObj_getObjType(void* obj);//유형접근 
+int smmObj_getObjCredit(void* obj);//학점접근 
+int smmObj_getObjEnergy(void* obj);//에너지접근 
+smmObjGrade_e smmObj_getObjGrade(void* obj);//성적접근 
 
 
 
 //element to string
-char* smmObj_getTypeName(int type);
-char* smmObj_getGradeName(smmObjGrade_e grade);
+char* smmObj_getTypeName(int type);//타입에따른 유형이름 
+char* smmObj_getGradeName(smmObjGrade_e grade);//성적에따른 성적이름 
 
 #endif /* smm_object_h */

@@ -31,6 +31,7 @@ char* smmObj_getTypeName(int type)
 	return (char*)smmNodeName[type];
  } 
  
+//성적유형이름(grade에따른)
  static char smmGradeName[MAX_GRADE][MAX_CHARNAME] =
 {
   "A+",
@@ -43,7 +44,7 @@ char* smmObj_getTypeName(int type)
   "C0",
   "C-"
 };
-//노드이름주소반환함수 
+//성적이름주소반환함수 
 char* smmObj_getGradeName(smmObjGrade_e grade)
 {
 	return (char*)smmGradeName[grade];
@@ -112,20 +113,4 @@ smmObjGrade_e smmObj_getObjGrade(void* obj)
 }//노드성적반환 
 
 
-
-//member retrieving
-
-
-
-/*element to string
-char* smmObj_getNodeName(smmNode_e type)
-{
-    return smmNodeName[type];
-}
-
-char* smmObj_getGradeName(smmGrade_e grade)
-{
-    return smmGradeName[grade];
-}
-*/
 

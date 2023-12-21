@@ -16,6 +16,7 @@
 #define FESTFILEPATH "marbleFestivalConfig.txt"
 
 /*board configuration parameters*/
+//고정변수, 0으로 초기화되어있음 
 static int board_nr;//보드칸수 
 static int food_nr;//음식카드개수 
 static int festival_nr;//축제카드개수 
@@ -43,7 +44,7 @@ void printGrades(int player); //print grade history of the player*
 void goForward(int player, int step); //make player go "step" steps on the board (check if player is graduated)
 void printPlayerStatus(void); //print all player status at the beginning of each turn*
 float calcAverageGrade(int player); //calculate average grade of the player
-smmGrade_e takeLecture(int player, char *lectureName, int credit); //take the lecture (insert a grade of the player)
+int takeLecture(void);//take the lecture (랜덤성적부여)
 void* findGrade(int player, char *lectureName); //find the grade from the player's grade history
 int getGraduatedPlayer(void);//졸업한 플레이어 반환함수
 int findLab(void);//실험실노드 반환함수 
@@ -101,12 +102,12 @@ void printPlayerStatus(void)
 	printf("------------------------------------------------------------------\n");
 	for(i=0; i<player_nr;i++)//플레이어 수만큼 반복. 모든플레이어 상태  출력 
 	{
-		printf("%s : position %i, energy %i, accumCredit %i\n",
+		printf("%s : position %i, energy %i, accumCredit %i, experimenting %i\n",
 		 cur_player[i].name,//이름 
 		 cur_player[i].position,//위치 
 		 cur_player[i].energy,//에너지 
-		 cur_player[i].accumCredit//누적학점
-		 //cur_player[i].flag_lab//실험중여부 
+		 cur_player[i].accumCredit,//누적학점
+		 cur_player[i].flag_lab//실험중여부 
 		 );
 	}
 	printf("------------------------------------------------------------------\n");
@@ -194,18 +195,21 @@ int getGraduatedPlayer(void)
 }
 
 
-//랜덤성적부여함수 
+/*랜덤성적부여함수
+ 반환:랜덤성적(0~MAX_GRADE:smmObjGrade_e범위안에서)*/
 int takeLecture(void)
 {
 	//랜덤성적변수 
 	int grade = rand()%MAX_GRADE;
 	printf("%i\n", grade);
 
-	return grade;
+	return grade;//랜덤성적부여 
 }
 
 
-//성적 이력 검색 함수
+/*성적 이력 검색 함수
+ 입력: player, lecturename
+ 반환: 강의수강여부(강의들음->1)*/
 int findGrade(int player, char *lectureName)
 {
 	int i;
@@ -213,24 +217,28 @@ int findGrade(int player, char *lectureName)
 	int already = 0;//강의안들음 
 	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
 	{
-		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);//강의구조체데이터받기 
 		//강의이력있으면 
 		if(smmObj_getObjName(gradePtr) == lectureName)
-		already = 1;//강의들음 
+		already = 1;//강의들음
+		break; 
 	}
 	
 	return already;//강의수강여부 반환 
 }
 
-//성적구조체 출력 함수 
+/*성적구조체 출력 함수
+ 입력: player
+ 강의이름, 강의성적, 강의학점 출력*/
 void printGrades(int player)
 {
 	int i;
 	void *gradePtr;  
-	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
+	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)//player의 모든성적구조체 
 	{
-		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
-		printf("%s grade:%s credit:%i \n", smmObj_getObjName(gradePtr), smmObj_getGradeName(smmObj_getObjGrade(gradePtr)), smmObj_getObjCredit(gradePtr));
+		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);//강의구조체 데이터 받기 
+		printf("%s grade:%s credit:%i \n"
+		, smmObj_getObjName(gradePtr), smmObj_getGradeName(smmObj_getObjGrade(gradePtr)), smmObj_getObjCredit(gradePtr));
 	}
 }
 
@@ -249,23 +257,24 @@ int findLab(void)
 	}
 	return i;//실험실노드반환 
 } 
-//action code when a player stays at a node
+
+/*action code when a player stays at a node
+ 입력: player
+ 노드 타입(case) 별로 액션수행 함수*/
 void actionNode(int player) //바꿔야함 
 {
 	//변수지정 
-	void* boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);//플레이어 위치따른 노드구조체주소  
+	void* boardPtr = smmdb_getData(LISTNO_NODE, cur_player[player].position);//플레이어 위치따른 노드구조체 데이터받기 
     int type = smmObj_getObjType(boardPtr);//노드구조체 유형 
     char *name = smmObj_getObjName(boardPtr);//노드구조체 이름 
     int credit = smmObj_getObjCredit(boardPtr);//노드 구조체 학점
 	int energy = smmObj_getObjEnergy(boardPtr);//노드 구조체 에너지 
-    //void *gradePtr =  smmdb_getData(LISTNO_OFFSET_GRADE + player, cur_player[player].lecture+1);//강의들으면 그 성적 출력 
-    //smmObjGrade_e grade_r = smmObj_getObjGrade(gradePtr)//성적받기 
     
     //랜덤카드뽑기 
-    int foodcard_r = (rand()%food_nr);
-    int festcard_r = (rand()%festival_nr);
-    void *foodPtr = smmdb_getData(LISTNO_FOODCARD, foodcard_r);
-    void *festPtr = smmdb_getData(LISTNO_FESTCARD, festcard_r);
+    int foodcard_r = (rand()%food_nr);//랜덤음식카드숫자 
+    int festcard_r = (rand()%festival_nr);//랜덤축제카드숫자 
+    void *foodPtr = smmdb_getData(LISTNO_FOODCARD, foodcard_r);//랜덤숫자에 맞는 카드구조체 데이터받기 
+    void *festPtr = smmdb_getData(LISTNO_FESTCARD, festcard_r);//랜덤숫자에 맞는 카드구조체 데이터받기
     
 	switch(type)//각타입에 대한액션 
     {
@@ -275,6 +284,7 @@ void actionNode(int player) //바꿔야함
         	if(cur_player[player].energy >= smmObj_getObjEnergy(boardPtr) && findGrade(player, name) == 0 )
         	{
         	 char c;
+        	 //강의 정보 출력  
         	 printf("-->Lecture %s(credit:%i, energy:%i) starts!\n(press a to take a lecture):"
 			  ,name, credit, energy);
         	 c = getchar();
@@ -290,7 +300,7 @@ void actionNode(int player) //바꿔야함
                 //성적구조체 생성,저장  
 	            void* gradeObj = smmObj_genObject(name, smmObjType_grade, 0, credit, 0, grade);//강의이름,학점,성적 
                  smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradeObj);
-                //강의후 변화 출력 
+                //강의후 변화 출력 :성적, 남은에너지 
                 printf("-->%s successfully takes the lecture %s with grade %s, remained energy : %i", //(average:%i)
 				 cur_player[player].name, smmObj_getObjName(boardPtr), smmObj_getGradeName(smmObj_getObjGrade(gradeObj)), cur_player[player].energy);
 			  }
@@ -300,7 +310,7 @@ void actionNode(int player) //바꿔야함
 			  
 			break;
 			}
-			//소요에너지가부족하거나 들었던강의임
+			//1-2.강의 수강 불가: 소요에너지가부족하거나 들었던강의임
 			printf("You can't take a %s\n(소요에너지 부족, 들었던 강의)\n", name);
          
          break;
@@ -385,20 +395,18 @@ void actionNode(int player) //바꿔야함
 
 int main(int argc, const char * argv[]) {
     
+    //구조체 생성에 필요한 변수 
     FILE* fp;//파일포인터 
-    char name[MAX_CHARNAME];
-    int type;
-    int credit;
-    int energy;
-    int i;
-    int initEnergy; //*집노드의 보충에너지 
-    int turn = 0; 
+    char name[MAX_CHARNAME];//이름배열 
+    int type;//유형 
+    int credit;//학점 
+    int energy;//에너지 
+    int i;//변수-반복문에활용 
+    int initEnergy; //게임시작하면 정해짐->집노드(첫번째노드)에너지로 
+    int turn = 0; //누구차례 
+     
     
-    board_nr = 0;
-    food_nr = 0;
-    festival_nr = 0;
-    
-    srand(time(NULL));
+    srand(time(NULL));//시간변수-랜덤수생성에 활용 
     
     //1. import parameters ---------------------------------------------------------------------------------
     /*1-1. boardConfig : 보드노드구조체 생성, 정보저장, 노드수저장,노드구조체 출력*/
@@ -435,7 +443,7 @@ int main(int argc, const char * argv[]) {
     } 
     
    
-    //1-2. food card config 
+    /*1-2. food card config*/
     if ((fp = fopen(FOODFILEPATH,"r")) == NULL)
     {
         printf("[ERROR] failed to open %s. This file should be in the same directory of SMMarble.exe.\n", FOODFILEPATH);
@@ -447,7 +455,7 @@ int main(int argc, const char * argv[]) {
     {
         //store the parameter set
         void *foodObj = smmObj_genObject(name, smmObjType_food, 0, 0, energy, 0); 
-        smmdb_addTail(LISTNO_FOODCARD, foodObj);//필요없지않나 보드판처럼이어진게아니니까 
+        smmdb_addTail(LISTNO_FOODCARD, foodObj);
         
         food_nr ++;
     }
@@ -462,7 +470,7 @@ int main(int argc, const char * argv[]) {
     }//각 음식카드  정보 확인 
     
     
-    //1-3. festival card config 
+    /*1-3. festival card config*/
     if ((fp = fopen(FESTFILEPATH,"r")) == NULL)
     {
         printf("[ERROR] failed to open %s. This file should be in the same directory of SMMarble.exe.\n", FESTFILEPATH);
