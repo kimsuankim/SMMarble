@@ -37,7 +37,7 @@ static player_t *cur_player;//포인터변수선언
 
 //function prototypes
 #if 0
-int isGraduated(void); //check if any player is graduated 
+int isGraduated(void); //check if any player is graduated*
 void generatePlayers(int n, int initEnergy); //generate a new player*
 void printGrades(int player); //print grade history of the player*
 void goForward(int player, int step); //make player go "step" steps on the board (check if player is graduated)
@@ -45,7 +45,8 @@ void printPlayerStatus(void); //print all player status at the beginning of each
 float calcAverageGrade(int player); //calculate average grade of the player
 smmGrade_e takeLecture(int player, char *lectureName, int credit); //take the lecture (insert a grade of the player)
 void* findGrade(int player, char *lectureName); //find the grade from the player's grade history
-void printGrades(int player); //print all the grade history of the player
+int getGraduatedPlayer(void);//졸업한 플레이어 반환함수
+int findLab(void);//실험실노드 반환함수 
 #endif
 /*공백만들기 함수*/
 void blankSpace(void)
@@ -125,8 +126,9 @@ int rolldie(int player)
     return (rand()%MAX_DIE + 1); //주사위 1~6 반환 
 }
 
-/*전진.위치변경, 순환보드판구현 
- 입력: player(turn), step(die_result), homeEnergy(집노드에너지)*/
+/*전진.순환보드판구현 
+ 입력: player(turn), step(die_result), homeEnergy(집노드에너지)
+ 한칸씩 이동, 집노드 지나칠때 액션*/
 void goForward(int player, int step, int homeEnergy)
 {
 	void *boardPtr;
@@ -144,6 +146,7 @@ void goForward(int player, int step, int homeEnergy)
 		//집노드 지나치면
 		if(cur_player[player].position == 0)
 		{
+	     //에너지충전 
     	 cur_player[player].energy += homeEnergy; //기존에너지+ 초기에너지(집노드의 에너지) 
 		 printf("-->You Pass HOME\n");
 		 printf("-->You got %i energy!(energy:%i)\n", homeEnergy, cur_player[player].energy);
@@ -173,7 +176,7 @@ int isGraduated(void)
 	} 
 	return end;
 }
-/*졸업한 플레이어 확인함수
+/*졸업한 플레이어 반환함수
  반환:졸업한 플레이어*/ 
 int getGraduatedPlayer(void)
 {
@@ -194,7 +197,7 @@ smmObjGrade_e takeLecture(int player, char *lectureName, int credit)
 {
 	//랜덤성적변수 
 	smmObjGrade_e grade = (rand()%MAX_GRADE);
-	printf("%s, %i\n", grade);
+	printf("%s\n", grade);
 	//성적구조체 생성,저장  
 	void* gradeObj = smmObj_genObject(lectureName, smmObjType_grade, 0, credit, 0, grade);//강의이름,학점,성적 
      smmdb_addTail(LISTNO_OFFSET_GRADE + player, gradeObj);
@@ -206,10 +209,17 @@ smmObjGrade_e takeLecture(int player, char *lectureName, int credit)
 //성적 이력 검색 함수
 int findGrade(int player, char *lectureName)
 {
-	void* gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, *lectureName);
-	int grade = smmObj_getObjGrade(gradePtr);
+	int i;
+	void *gradePtr;
+	int already = 0;
+	for(i=0;i<smmdb_len(LISTNO_OFFSET_GRADE + player);i++)
+	{
+		gradePtr = smmdb_getData(LISTNO_OFFSET_GRADE + player, i);
+		if(smmObj_getObjName(gradePtr) == lectureName)
+		already = 1;
+	}
 	
-	return grade;
+	return already;
 }
 
 //성적구조체 출력 함수 
@@ -224,18 +234,20 @@ void printGrades(int player)
 	}
 }
 #endif
-//실험실노드 반환 함수
+/*실험실노드 반환 함수
+ 반환: 실험실노드 */
 int findLab(void)
 {
 	int i;
 	void *labPtr;  
-	for(i=0;i<board_nr;i++)
+	for(i=0;i<board_nr;i++)//모든노드확인 
 	{
 		labPtr = smmdb_getData(LISTNO_NODE, i);//노드데이터받기 
+		//노드타입 == 실험실이면 
 		if(smmObj_getObjType(labPtr) == SMMNODE_TYPE_LABORATORY) 
-		break;
+		break;//반복문나감 
 	}
-	return i;
+	return i;//실험실노드반환 
 } 
 //action code when a player stays at a node
 void actionNode(int player) //바꿔야함 
@@ -299,56 +311,66 @@ void actionNode(int player) //바꿔야함
 		 
 		/*실험실(2) : 무인도랑 비슷*/ 
 		case SMMNODE_TYPE_LABORATORY:
-		 if (cur_player[player].flag_lab == 1)//실험중
+		 //2-1.실험중
+		 if (cur_player[player].flag_lab == 1)
 		  {
 		  	//실험성공 기준값  
 		  	int threshold = (rand()%MAX_DIE + 1);
 		  	printf("->Experiment time!! Let's see if you can satisfy professor(threshold:%i)\n", threshold);
-		  	//실험하기 = 주사위 굴리기 
+		  	//실험하기 = 주사위 굴리기, 에너지 소모 
 		  	int ex_result = rolldie(player);
-		  	printf("->Experiment result : %i", ex_result); 
+		  	printf("->Experiment result : %i\n", ex_result); 
+		  	cur_player[player].energy -= smmObj_getObjEnergy(boardPtr);//에너지소모 
 		  	//실험성공여부 
-		  	if(ex_result >= threshold)//성공
+		  	//--성공 
+		  	if(ex_result >= threshold)
 			  {
 			  	printf("success!! %s can exit this lab!", cur_player[player].name); 
 			  	//실험중 상태 아님
 			  	cur_player[player].flag_lab = 0;
 				//실험실 탈출   
 		      }
-		    else//실패
+		    //--실패 
+		    else
 			printf("fail.. %s cannot exit this lab.. you can try it again next turn", cur_player[player].name);
 		  } 
-		  else//실험중아님
+		  //2-2.실험중아님 
+		  else
 		  printf("->This is not experiment time. You can go through this lab.");
 		break;
 		
 		/*집(3): 에너지충전 :월급개념
 		case SMMNODE_TYPE_HOME: 
-		 cur_player[player].energy += smmObj_getObjEnergy(boardPtr);
-		 printf("-->WELCOME HOME\n");
-		 printf("-->You got %i energy!\n", smmObj_getObjEnergy(boardPtr));
-		 break; 
+	    goForward 함수에 구현함;전진 함수 
 		*/	
-		/*실험길로가 : 실험실로 이동, 실험중 상태 */
+		
+		/*실험실로가(4) : 실험실로 이동, 실험중 상태 */
 		case SMMNODE_TYPE_GOTOLAB:
 			//1)실험중 상태로 변경
 			cur_player[player].flag_lab = 1;
 			//2)실험실로 이동 :실험실노드반환함수 
-			cur_player[player].position = findLab();
-			actionNode(player);
+			cur_player[player].position = findLab();//실험실로 이동함 
+			actionNode(player);//실험실에서액션 
 			break;
-		//보충찬스:랜덤음식카드, 에너지보충 
+			
+		/*보충찬스(5):랜덤음식카드, 에너지보충*/
 		case SMMNODE_TYPE_FOODCHANCE:
+		 //랜덤음식카드 뽑기 
          printf("foodcard %i : %s, energy %i\n", 
 		 foodcard_r, smmObj_getObjName(foodPtr), smmObj_getObjEnergy(foodPtr));
+		 //에너지보충 
 		 cur_player[player].energy += smmObj_getObjEnergy(foodPtr);
 		 break;
-		//축제: 랜덤축제카드, 미션수행 
+		 
+		/*축제(6): 랜덤축제카드, 미션수행 */
 		case SMMNODE_TYPE_FESTIVAL:
+		 //랜덤축제카드 뽑기 
          printf("festivalcard %i : %s\n", 
 		 festcard_r, smmObj_getObjName(festPtr));
+		 //미션하기 
 		 printf("You have to complete'%s'(press any key to continue)\n", smmObj_getObjName(festPtr)); 
 		 break;
+		 
 		default:
             break;
     }
@@ -364,7 +386,6 @@ int main(int argc, const char * argv[]) {
     int i;
     int initEnergy; //*집노드의 보충에너지 
     int turn = 0; 
-    //void *boardPtr_f = smmdb_getData(LISTNO_NODE, 0);//집노드(첫번째노드) 데이터 받기
     
     board_nr = 0;
     food_nr = 0;
@@ -460,9 +481,11 @@ int main(int argc, const char * argv[]) {
 		i, smmObj_getObjName(festivalObj));
     }//축제카드  정보 확인 
  
-    //0.opening
-    blankSpace();
-    opening();
+ 
+    //파일구현끝 
+	//opening -------------------------------------------------------------------------------------------------
+    blankSpace();//공백함수 
+    opening();//게임오프닝 
     
     //2. Player configuration ---------------------------------------------------------------------------------
     
@@ -525,7 +548,8 @@ int main(int argc, const char * argv[]) {
     
     //4. SM Marble game end------------------------------------------------------------------------------------------
     //졸업한 플레이어 확인, 출력 
-    int player_gr = getGraduatedPlayer();
+    blankSpace(); 
+    int player_gr = getGraduatedPlayer();//졸업한플레이어 
     printf("GAME END!!\n");
     printf("GraduatedPlayer is %s\n", cur_player[player_gr].name);
     //졸업한 플레이어의 수강이력 출력 
